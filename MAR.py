@@ -11,7 +11,7 @@ def mouth_aspect_ratio(mouth):
     C = dist.euclidean(mouth[0], mouth[6])  # 49, 55
 
     # compute the mouth aspect ratio
-    mar = (A + B) / (2.0 * C)
+    mar = (A + B) / (2 * C)
 
     # return the mouth aspect ratio
     return mar

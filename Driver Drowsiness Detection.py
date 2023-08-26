@@ -7,8 +7,9 @@ import imutils
 import time
 import dlib
 import math
-from cv2 import cv2
+import cv2
 import numpy as np
+import winsound
 from EAR import eye_aspect_ratio
 from MAR import mouth_aspect_ratio
 from HeadPose import getHeadTiltAndCoords
@@ -24,7 +25,7 @@ predictor = dlib.shape_predictor(
 # camera sensor to warm up
 print("[INFO] initializing camera...")
 
-vs = VideoStream(src=1).start()
+vs = cv2.VideoCapture(0)
 # vs = VideoStream(usePiCamera=True).start() # Raspberry Pi
 time.sleep(2.0)
 
@@ -46,8 +47,8 @@ image_points = np.array([
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
 (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
 
-EYE_AR_THRESH = 0.25
-MOUTH_AR_THRESH = 0.79
+EYE_AR_THRESH = 0.22
+MOUTH_AR_THRESH = 0.75
 EYE_AR_CONSEC_FRAMES = 3
 COUNTER = 0
 
@@ -58,7 +59,7 @@ while True:
     # grab the frame from the threaded video stream, resize it to
     # have a maximum width of 400 pixels, and convert it to
     # grayscale
-    frame = vs.read()
+    ret, frame = vs.read()
     frame = imutils.resize(frame, width=1024, height=576)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     size = gray.shape
@@ -78,7 +79,7 @@ while True:
         # compute the bounding box of the face and draw it on the
         # frame
         (bX, bY, bW, bH) = face_utils.rect_to_bb(rect)
-        cv2.rectangle(frame, (bX, bY), (bX + bW, bY + bH), (0, 255, 0), 1)
+        # cv2.rectangle(frame, (bX, bY), (bX + bW, bY + bH), (0, 255, 0), 1)
         # determine the facial landmarks for the face region, then
         # convert the facial landmark (x, y)-coordinates to a NumPy
         # array
@@ -108,8 +109,9 @@ while True:
             # if the eyes were closed for a sufficient number of times
             # then show the warning
             if COUNTER >= EYE_AR_CONSEC_FRAMES:
-                cv2.putText(frame, "Eyes Closed!", (500, 20),
+                cv2.putText(frame, "Eyes Closed!", (800, 60),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                winsound.Beep(2000,500)
             # otherwise, the eye aspect ratio is not below the blink
             # threshold, so reset the counter and alarm
         else:
@@ -124,14 +126,14 @@ while True:
         mouthHull = cv2.convexHull(mouth)
 
         cv2.drawContours(frame, [mouthHull], -1, (0, 255, 0), 1)
-        cv2.putText(frame, "MAR: {:.2f}".format(mar), (650, 20), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        cv2.putText(frame, "Mouth Aspect Ratio: {:.2f}".format(mar), (350, 20), 
+                    cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 2)
 
         # Draw text if mouth is open
         if mar > MOUTH_AR_THRESH:
             cv2.putText(frame, "Yawning!", (800, 20),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-
+            winsound.Beep(2000,500)
 
         # loop over the (x, y)-coordinates for the facial landmarks
         # and draw each of them
@@ -143,8 +145,8 @@ while True:
                 image_points[0] = np.array([x, y], dtype='double')
                 # write on frame in Green
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
-                cv2.putText(frame, str(i + 1), (x - 10, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
+                # cv2.putText(frame, str(i + 1), (x - 10, y - 10),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
             elif i == 8:
                 # something to our key landmarks
                 # save to our new key point list
@@ -152,8 +154,8 @@ while True:
                 image_points[1] = np.array([x, y], dtype='double')
                 # write on frame in Green
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
-                cv2.putText(frame, str(i + 1), (x - 10, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
+                # cv2.putText(frame, str(i + 1), (x - 10, y - 10),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
             elif i == 36:
                 # something to our key landmarks
                 # save to our new key point list
@@ -161,8 +163,8 @@ while True:
                 image_points[2] = np.array([x, y], dtype='double')
                 # write on frame in Green
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
-                cv2.putText(frame, str(i + 1), (x - 10, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
+                # cv2.putText(frame, str(i + 1), (x - 10, y - 10),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
             elif i == 45:
                 # something to our key landmarks
                 # save to our new key point list
@@ -170,8 +172,8 @@ while True:
                 image_points[3] = np.array([x, y], dtype='double')
                 # write on frame in Green
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
-                cv2.putText(frame, str(i + 1), (x - 10, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
+                # cv2.putText(frame, str(i + 1), (x - 10, y - 10),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
             elif i == 48:
                 # something to our key landmarks
                 # save to our new key point list
@@ -179,8 +181,8 @@ while True:
                 image_points[4] = np.array([x, y], dtype='double')
                 # write on frame in Green
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
-                cv2.putText(frame, str(i + 1), (x - 10, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
+                # cv2.putText(frame, str(i + 1), (x - 10, y - 10),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
             elif i == 54:
                 # something to our key landmarks
                 # save to our new key point list
@@ -188,14 +190,14 @@ while True:
                 image_points[5] = np.array([x, y], dtype='double')
                 # write on frame in Green
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
-                cv2.putText(frame, str(i + 1), (x - 10, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
+                # cv2.putText(frame, str(i + 1), (x - 10, y - 10),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 255, 0), 1)
             else:
                 # everything to all other landmarks
                 # write on frame in Red
                 cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
-                cv2.putText(frame, str(i + 1), (x - 10, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+                # cv2.putText(frame, str(i + 1), (x - 10, y - 10),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
 
         #Draw the determinant image points onto the person's face
         for p in image_points:
@@ -208,8 +210,8 @@ while True:
         cv2.line(frame, start_point, end_point_alt, (0, 0, 255), 2)
 
         if head_tilt_degree:
-            cv2.putText(frame, 'Head Tilt Degree: ' + str(head_tilt_degree[0]), (170, 20),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            cv2.putText(frame, 'Head Tilt Degree: ' + str(head_tilt_degree[0]), (20, 720),
+                        cv2.FONT_HERSHEY_TRIPLEX, 0.5, (0, 0, 255), 1)
 
         # extract the mouth coordinates, then use the
         # coordinates to compute the mouth aspect ratio
@@ -226,3 +228,4 @@ while True:
 # do a bit of cleanup
 cv2.destroyAllWindows()
 vs.stop()
+
